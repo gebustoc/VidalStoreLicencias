@@ -1,0 +1,40 @@
+# Kafka KRaft 3 controladores + 3 brokers para una máquina mq-N de AWS.
+# Diferencias con el compose local: network_mode host (entre máquinas no hay
+# DNS de Docker), un solo listener por nodo con su IP privada fija, y los
+# votantes con las tres IP privadas.
+# Se levanta con: sudo docker compose --env-file mq-N.env up -d --wait
+# (mq.env.ejemplo documenta las variables; no lleva secretos y se versiona)
+services:
+  kafka:
+    image: apache/kafka:4.4.0
+    restart: unless-stopped
+    container_name: vidalstore-mq-broker-${MQ_NODE_ID}
+    network_mode: host
+    volumes:
+      - kafka-data:/var/lib/kafka/data
+    environment:
+      CLUSTER_ID: ${KAFKA_CLUSTER_ID}
+      KAFKA_NODE_ID: ${MQ_NODE_ID}
+      KAFKA_PROCESS_ROLES: controller,broker
+      KAFKA_CONTROLLER_QUORUM_VOTERS: ${KAFKA_CONTROLLER_QUORUM_VOTERS}
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_LISTENERS: CONTROLLER://:9093,PLAINTEXT://:9092
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://${MQ_PRIVATE_IP}:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 3
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 3
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 2
+      KAFKA_DEFAULT_REPLICATION_FACTOR: 3
+      KAFKA_MIN_INSYNC_REPLICAS: 2
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "false"
+      KAFKA_LOG_DIRS: /var/lib/kafka/data
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/kafka/bin/kafka-broker-api-versions.sh --bootstrap-server localhost:9092 > /dev/null 2>&1 || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 10
+      start_period: 60s
+
+volumes:
+  kafka-data:

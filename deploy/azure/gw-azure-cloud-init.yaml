@@ -1,0 +1,14 @@
+#cloud-config
+# No usar caracteres no ASCII en este archivo.
+package_update: true
+packages:
+  - docker.io
+  - iptables-persistent
+
+runcmd:
+  - sysctl -w net.ipv4.ip_forward=1
+  - echo 'net.ipv4.ip_forward=1' > /etc/sysctl.d/99-ipforward.conf
+  - iptables -t nat -A POSTROUTING -s 10.1.0.0/16 -o eth0 -j MASQUERADE
+  - iptables -I DOCKER-USER -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
+  - iptables -I DOCKER-USER -s 10.1.0.0/16 -j ACCEPT
+  - netfilter-persistent save

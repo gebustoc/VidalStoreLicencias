@@ -1,0 +1,33 @@
+# RabbitMQ en mq-1 y mq-2 (Entrega 2, paso 8).
+# El clúster se forma solo con classic_config. rabbitmq.conf (con la clave)
+# y la cookie viven en /opt/vidalstore/secretos/ y NO se versionan:
+#   /opt/vidalstore/secretos/rabbitmq.conf   → cluster_formation.classic_config.nodes.1/2
+#   /opt/vidalstore/secretos/erlang.cookie   → misma cookie en ambas máquinas
+#     (permisos 400 y dueño 999:999, el uid del usuario rabbitmq:
+#      sudo install -m 400 -o 999 -g 999 erlang.cookie /opt/vidalstore/secretos/erlang.cookie)
+# El usuario NO puede ser guest (solo entra desde localhost).
+# Se levanta en cada máquina con: sudo docker compose --env-file mq-N.env up -d --wait
+services:
+  rabbitmq:
+    image: rabbitmq:4.3-management
+    restart: unless-stopped
+    container_name: vidalstore-rabbit-${MQ_NODE_ID}
+    network_mode: host
+    hostname: rabbit-${MQ_NODE_ID}
+    env_file: /opt/vidalstore/secretos/rabbit.env
+    environment:
+      RABBITMQ_NODENAME: rabbit@${MQ_NODE_ID_HOST}
+      RABBITMQ_USE_LONGNAME: "true"
+    volumes:
+      - /opt/vidalstore/secretos/rabbitmq.conf:/etc/rabbitmq/conf.d/20-cluster.conf:ro
+      - /opt/vidalstore/secretos/erlang.cookie:/var/lib/rabbitmq/.erlang.cookie:ro
+      - rabbitmq-data:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "check_port_connectivity"]
+      interval: 10s
+      timeout: 10s
+      retries: 10
+      start_period: 60s
+
+volumes:
+  rabbitmq-data:

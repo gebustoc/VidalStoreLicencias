@@ -1,0 +1,14 @@
+# Kafka UI en la máquina gestion (Entrega 2, paso 8).
+# Se entra desde el equipo por un túnel de Session Manager al puerto 8080;
+# gestion no tiene reglas de entrada ni IP pública (sg-gestion sin entradas).
+# Se levanta con: sudo docker compose up -d
+services:
+  kafka-ui:
+    image: provectuslabs/kafka-ui:latest
+    container_name: vidalstore-gestion-kafka-ui
+    network_mode: host
+    environment:
+      KAFKA_CLUSTERS_0_NAME: vidalstore
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: 10.0.21.11:9092,10.0.22.12:9092,10.0.21.13:9092
+      DYNAMIC_CONFIG_ENABLED: true
+    restart: unless-stopped

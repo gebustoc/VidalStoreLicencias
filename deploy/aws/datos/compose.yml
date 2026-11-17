@@ -1,0 +1,25 @@
+# Postgres 18 en la máquina datos (Entrega 2, paso 8).
+# OJO: en Postgres 18 el volumen se monta en /var/lib/postgresql, NO en .../data.
+# Se levanta con: sudo docker compose --env-file datos.env up -d --wait
+# datos.env NO se versiona: se recrea desde el Parameter Store
+#   aws ssm get-parameter --region us-east-1 --with-decryption \
+#     --name /vidalstore/datos/env --query Parameter.Value --output text \
+#     | sudo tee /opt/vidalstore/secretos/datos.env > /dev/null
+services:
+  postgres:
+    image: postgres:18
+    restart: unless-stopped
+    container_name: vidalstore-datos-postgres
+    network_mode: host
+    env_file: /opt/vidalstore/secretos/datos.env
+    volumes:
+      - postgres-data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+volumes:
+  postgres-data:
