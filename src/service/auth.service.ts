@@ -3,7 +3,6 @@ import { Game } from '../model/Game.js';
 import {writeFileSync } from 'fs';
 import { randomUUID, UUID } from 'crypto';
 import { License } from '../model/License.js';
-import { GameService } from './game.service.js';
 import { Deleter } from '../model/Deleter.js';
 import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
