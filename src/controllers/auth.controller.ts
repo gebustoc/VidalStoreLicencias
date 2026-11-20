@@ -23,11 +23,17 @@ export class AuthController {
   }
 
   @Post("/v1/compras/:id")
-  async buyGame(@Headers('authorization') auth : string, @Param("id") id : number){
+  async buyGame(@Headers('authorization') auth : string, @Param("id") idText : string){
     let claims :Claims 
+    let id :undefined|number= undefined;    
+
     try{claims = await verifyToken(auth) }
     catch(error){throw new BadRequestException(`${error}`)}
+    try{id = Number.parseInt(idText)}
+    catch(error){throw new BadRequestException(`id must be a valid integer:${error}`)}
     return this.authService.buyGame(claims.sub,id)
+
+
   }
 
   @Get("/v1/licencias")
@@ -36,12 +42,20 @@ export class AuthController {
   }
 
   @Delete("/v1/licencias/:id")
-  async removeLicense(@Headers('authorization') auth : string, @Param("id") id : number){
+  async removeLicense(@Headers('authorization') auth : string, @Param("id") idText : string){
     let claims :Claims 
+    let id :undefined|number= undefined;    
+
     try{claims = await verifyToken(auth) }
     catch(error){throw new BadRequestException(`${error}`)}    
-
     
+    try{id = Number.parseInt(idText)}
+    catch(error){throw new BadRequestException(`id must be a valid integer:${error}`)}
+
+
+    if (!(Number.isInteger(id)) ){throw new BadRequestException("id must be a valid integer")}
+
+
     return await this.authService.removeLicense(id,claims.sub)
   }
 
