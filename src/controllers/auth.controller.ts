@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Header, Headers, Param, Post, Put } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Delete, ForbiddenException, Get, Header, Headers, Param, Post, Put } from '@nestjs/common';
 import { AuthService } from '../service/auth.service.js';
 import { Deleter } from '../model/Deleter.js';
 import { Game } from '../model/Game.js';
@@ -16,13 +16,17 @@ export class AuthController {
 
   @Get("/v1/biblioteca")
   async getBiblioteca(@Headers('authorization') auth : string) : Promise<Game[]>{
-    const claims :Claims = await verifyToken(auth)
+    let claims :Claims 
+    try{claims = await verifyToken(auth) }
+    catch(error){throw new BadRequestException(`${error}`)}
     return await this.authService.getLibrary(claims.sub)
   }
 
   @Post("/v1/compras/:id")
   async buyGame(@Headers('authorization') auth : string, @Param("id") id : number){
-    const claims :Claims = await verifyToken(auth)
+    let claims :Claims 
+    try{claims = await verifyToken(auth) }
+    catch(error){throw new BadRequestException(`${error}`)}
     return this.authService.buyGame(claims.sub,id)
   }
 
@@ -33,7 +37,11 @@ export class AuthController {
 
   @Delete("/v1/licencias/:id")
   async removeLicense(@Headers('authorization') auth : string, @Param("id") id : number){
-    const claims :Claims = await verifyToken(auth)
+    let claims :Claims 
+    try{claims = await verifyToken(auth) }
+    catch(error){throw new BadRequestException(`${error}`)}    
+
+    
     return await this.authService.removeLicense(id,claims.sub)
   }
 
